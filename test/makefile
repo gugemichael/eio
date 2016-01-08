@@ -8,4 +8,4 @@ all :
 	${CC} eio_client.c ${LIBS} -o eio_client
 
 clean :
-	${RM} *.core core.* gmon.out logs *.gcno *.gcda
+	${RM} *.core core.* gmon.out logs *.gcno *.gcda eio_client eio_server
