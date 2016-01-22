@@ -69,16 +69,16 @@ void tcp_write(eio_loop* eio, int server_socket, int mask, void* context);
 void tcp_read(eio_loop* eio, int server_socket, int mask, void* context);
 void tcp_close(eio_loop* loop, int clientfd);
 
-#if 1
+#if 0
 #define nimo_log_info printf
 #define nimo_log_debug printf
 #define nimo_log_warn printf
 #define nimo_log_error printf
 #else
-#define nimo_log_info(expr)
-#define nimo_log_debug(expr)
-#define nimo_log_warn(expr) 
-#define nimo_log_error(expr)
+#define nimo_log_info(expr,...) do{}while(0)
+#define nimo_log_debug(expr,...) do{}while(0)
+#define nimo_log_warn(expr,...) do{}while(0)
+#define nimo_log_error(expr,...) do{}while(0)
 #endif
 
 int LIMIT = 0;
@@ -141,21 +141,29 @@ void tcp_write(eio_loop* eio, int clientfd, int mask, void* context)
 	//const char* echo = "nimo_eio_server\n";
 	const char* echo = "+OK\r\n";
 	size_t len = strlen(echo);
+	int n = 0;
 	while(1) {
-		int n = write(clientfd,echo,len);
+		n = write(clientfd,echo,len);
 		nimo_log_debug("[ok=write] write [%d] bytes",n);
-		if (-1==n && errno==EAGAIN) {
+		if (-1 == n) {
+			if (errno != EAGAIN) { 
+				nimo_log_error("[error=socket] Write Socket error %s", strerrno(errno));
+				break;
+			}
 			nimo_log_debug("[ok=socket] Write Socket Pause");
-			break;
 		}
 		len -= n;
 		if (len <= 0)
 			break;
 	}
 
-	eio_loop_file_event(eio, clientfd, EIO_WRITEABLE, EIO_EVENT_DEL, tcp_write, NULL);
-
-	nimo_log_debug("[eio] fd[%d] event %d", clientfd, eio_loop_file_event(eio, clientfd, EIO_NONE, EIO_EVENT_GET, NULL, NULL));
+	if (-1 != n) {
+		eio_loop_file_event(eio, clientfd, EIO_WRITEABLE, EIO_EVENT_DEL, NULL, NULL);
+		nimo_log_debug("[eio] fd[%d] event %d", clientfd, eio_loop_file_event(eio, clientfd, EIO_NONE, EIO_EVENT_GET, NULL, NULL));
+	} else {
+		tcp_close(eio, clientfd);
+		nimo_log_error("[eio] write fd[%d] error , closing ");
+	}
 }
 
 void tcp_read(eio_loop* eio, int clientfd, int mask, void* context)
@@ -169,7 +177,7 @@ void tcp_read(eio_loop* eio, int clientfd, int mask, void* context)
 	while(1) {
 		ret = read(clientfd,buffer,1024);
 		if (LIMIT++ == 1000000)
-			exit(0);
+			;//exit(0);
 		if (0 == ret) {
 			nimo_log_error("[ok=socket] socket fd[%d] read zero ! closed under mask %d",clientfd, mask);
 			tcp_close(eio, clientfd);

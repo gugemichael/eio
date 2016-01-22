@@ -36,7 +36,7 @@
 #define OUTPUT (0)
 #define LONG_CONNECT (0)
 
-#define THREADS_NUM (10)
+#define THREADS_NUM (8)
 
 int PORT = 0;
 char IP[64] = {0};

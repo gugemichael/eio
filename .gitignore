@@ -80,3 +80,6 @@ test/client
 core
 core.*
 *.core
+
+test/eio_client
+test/eio_server
