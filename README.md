@@ -1,5 +1,5 @@
 
-easy-event-io 
+Easy Event IO framework
 =============
 tcp read/write io event library on epoll and kqueue
 
